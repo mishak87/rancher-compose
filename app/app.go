@@ -1,7 +1,10 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/codegangsta/cli"
 	"github.com/docker/libcompose/cli/app"
 	"github.com/docker/libcompose/cli/command"
@@ -60,6 +63,14 @@ func (p *ProjectFactory) Create(c *cli.Context) (*project.Project, error) {
 	context.Pull = c.Bool("pull")
 
 	return rancher.NewProject(context)
+}
+
+func ConfigCommand(factory app.ProjectFactory) cli.Command {
+	return cli.Command{
+		Name:   "config",
+		Usage:  "Dump config",
+		Action: app.WithProject(factory, Config),
+	}
 }
 
 func UpgradeCommand(factory app.ProjectFactory) cli.Command {
@@ -213,6 +224,31 @@ func ProjectUp(p *project.Project, c *cli.Context) {
 		// wait forever
 		<-make(chan interface{})
 	}
+}
+
+func Config(p *project.Project, c *cli.Context) {
+	if err := p.Create(c.Args()...); err != nil {
+		logrus.Fatal(err)
+	}
+
+	var y = make(map[string]interface{})
+	for _, k := range p.Configs.Keys() {
+		c, err := p.Configs.Get(k)
+		y[k] = c
+		fmt.Printf("%s: %+v\n%+v\n", k, c, err)
+		fromService, err := p.CreateService(k)
+	}
+	b, err := yaml.Marshal(y)
+	fmt.Printf("%s\n%+v\n", b, err)
+	// fmt.Printf("%+v", p.Configs)
+	// fmt.Printf("%+v", c)
+	// fmt.Printf("%+v", p.Configs)
+	// b, err := json.MarshalIndent(p.Configs, "", "  ")
+	// fmt.Printf("%s\n", b)
+
+	// if err != nil {
+	// 	logrus.Fatal(err)
+	// }
 }
 
 func Upgrade(p *project.Project, c *cli.Context) {

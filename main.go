@@ -80,6 +80,7 @@ func cliMain() {
 		command.RmCommand(factory),
 		rancherApp.PullCommand(factory),
 		rancherApp.UpgradeCommand(factory),
+		rancherApp.ConfigCommand(factory),
 	}
 
 	if err := app.Run(os.Args); err != nil {
